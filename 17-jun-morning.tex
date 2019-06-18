@@ -1,0 +1,272 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, bussproofs, mathtools}
+
+\title{Coalgebraic Semantics Lecture 1}
+\author{Farzaneh Derakhshan, Tao Gu, Aditya Oak}
+\date{17 June, 2019}
+
+
+%%%%%%%%%% new commands
+\newcommand{\alphA}{\mathcal{A}}
+\newcommand{\ocaml}{\mathsf{OCaml}}
+\newcommand{\cons}{\mathsf{cons}}
+\newcommand{\natN}{\mathbb{N}}
+\newcommand{\len}{\mathsf{len}}
+\newcommand{\odd}{\mathsf{odd}}
+\newcommand{\even}{\mathsf{even}}
+\newcommand{\merge}{\mathsf{merge}}
+\newcommand{\head}{\mathsf{head}}
+\newcommand{\tail}{\mathsf{tail}}
+% \newcommand{\even}{\mathsf{even}}
+% \newcommand{\odd}{\mathsf{odd}}
+\newcommand{\bis}{\sim}
+\newcommand{\imply}{\Rightarrow}
+
+%%%%%%%%%% new environments
+% \theoremstyle{theorem}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{definition}
+\newtheorem{example}[theorem]{Example}
+
+
+\begin{document}
+\maketitle
+
+This lecture is a first introduction to coalgebra. We first recall the inductive data types and the principle of induction. Then we introduce some basic coinductive data types and the principle of coinduction.
+
+\section{Finite and infinite data types}
+Throughout this note we fix an arbitrary alphabet set $\alphA$. The elements in $\alphA$ are called letters.
+\begin{example}
+Our first example is the inductive data structure $\alphA^*$ consisting of all finite words on $\alphA$. There are several ways of describing $\alphA^*$:
+\begin{itemize}
+    \item In $\ocaml$, one can write:
+    \[
+    \textbf{type list a = nil $\mid$ cons a l }
+    \]
+    \item By derivation rules:
+    \begin{center}
+        \begin{tabular}{cc}
+            \bottomAlignProof
+                \AxiomC{}
+                \UnaryInfC{$\epsilon \in \alphA^*$}
+                \DisplayProof
+            &
+            \bottomAlignProof
+                \AxiomC{$a\in \alphA$}
+                \AxiomC{$u\in \alphA^*$}
+                \BinaryInfC{$a \cdot u \in \alphA^*$}
+                \DisplayProof
+        \end{tabular}
+    \end{center}
+\end{itemize}
+\end{example}
+Given a letter in $\alphA$ and a word in $\alphA^*$, we can {\it construct} a new word in $\alphA^*$ by appending the letter to the word. The above definition does not only define $\alphA^*$ using its constructors, but also provides a way to inductively define functions operating on $\alphA^*$. In the following Example \ref{ex:leng} we use constructors of $\alphA^*$ to define the function $\len$.
+\begin{example}\label{ex:leng}
+We define function $\len \colon \alphA \to \natN$ inductively using the constructors of $\alphA^*$:
+$$\len(\epsilon)=0, \quad  \quad \quad \len(a\cdot u)= 1+\len(u).$$
+Intuitively $\len$ simply counts the length of a finite word. By the inductive construction of finite words, it is enough to explain the behaviour of the function (i) on the empty word, and (ii) on $a \cdot u$ assuming its behaviour on $u$.
+\end{example}
+
+\begin{example}\label{ex:concat}
+Concatenation function $;\ \colon \alphA^* \times \alphA^* \to \alphA^*$ is defined by structural induction on its first argument as:
+$$\epsilon;u=u, \quad  \quad \quad (a\cdot u); v= a \cdot (u;v).$$
+Similar to the previous example, we used recursive call to define concatenation.
+\end{example}
+We can also prove properties of functions defined on inductive types using their constructors:
+\begin{example}
+We want to prove $\len(u;v)= \len(u)+\len(v)$ given the definitions of $\len$ and $;$ functions in examples \ref{ex:leng} and \ref{ex:concat}. The proof goes by induction on the first argument:
+\begin{description}
+    \item[Base case.] $\len(\epsilon;v) = \len(v) = 0+\len(v) = \len(\epsilon)+\len(v)$
+    \item[Inductive case.] $\len(a \cdot u;v)=\len(a\cdot(u;v))=1+\len(u;v)$ by definitions of $\len$ and concatenation.
+By inductive hypothesis, $\len(u;v) = \len(u)+\len(v)$. Thus $\len(a \cdot u;v)= 1+\len(u;v) = 1 + \len(u)+\len(v) = \len(a\cdot u)+\len(v)$.
+\end{description}
+\end{example}
+Inductive datatypes come with an inductive principle that works on their constructors. For the coinductive infinite data types we have a similar situation. But instead of defining the values of constructors, for coinductive types we define the value of {\it deconstructors} in a dual manner. 
+
+\section{Infinite Sequences over $\alphA$}
+The set $\alphA^\omega$ of all infinite sequences over $\alphA$ is defined as $\{\sigma \mid \sigma \colon \natN\to \alphA \}$. We use the notation $\sigma = (\sigma_0, \sigma_1, \dots ) $. We define deconstructing functions
+\begin{align*}
+   \head(\sigma) & \coloneqq \sigma(0) \\
+   \tail(\sigma)(n) & \coloneqq \sigma(n+1)
+\end{align*}
+ 
+\textbf{Coalgebraic semantics:} It can be considered as a way to reason about the programs that operate on infinite data structures. More details on this will be provided in the following lectures.
+ 
+\subsection{Functions over $\alphA^{\omega}$}
+We can define some basic operations on $\alphA^\omega$:
+\begin{itemize}
+\item $ \even\colon \alphA^{\omega} \to \alphA^{\omega} $,
+\[
+    \even \colon (\sigma_0, \sigma_1, \dots) \mapsto (\sigma_0, \sigma_2 , \sigma_4, \dots) 
+\]
+\item $\odd \colon \alphA^{\omega} \to \alphA^{\omega} $
+\[
+    \odd \colon (\sigma_0, \sigma_1, \dots) \mapsto (\sigma_1, \sigma_3 , \sigma_5, \dots) 
+\]
+\item $ \merge \colon \alphA^{\omega} \times \alphA^\omega \to \alphA^{\omega} $
+\[ 
+    \merge \colon (\sigma_0, \sigma_1 , \dots) , (\tau_0, \tau_1, \dots) \mapsto (\sigma_0, \tau_0 , \sigma_1 , \tau_1, \dots) 
+\]
+ 
+\end{itemize} 
+ 
+Recursive definitions of the above given functions:
+\begin{itemize}
+\item 
+$ 
+    \begin{cases}
+        \head (\merge (\sigma, \tau)) = \head (\sigma) \\
+        \tail (\merge (\sigma, \tau)) = \merge(\tau, \tail(\sigma)))
+    \end{cases}
+$
+\item 
+$
+    \begin{cases}
+        \head(\even(\sigma)) = \head(\sigma) \\
+        \tail(\even(\sigma)) = \even(\tail(\tail(\sigma))) = \odd(\tail(\sigma))
+    \end{cases}
+$
+\item 
+$
+    \begin{cases}
+        \head(\odd(\sigma)) = \head(\tail(\sigma))
+ \\
+        \tail(\odd(\sigma)) = \tail(\even(\tail(\sigma)))
+    \end{cases}
+$
+\end{itemize}
+
+\begin{proposition}
+$ \merge(\even(\sigma), \odd(\sigma)) = \sigma $
+\end{proposition}
+\begin{proof}
+Let $\rho = \merge(\even(\sigma), \odd(\sigma))$.
+Now we show that $\forall n \in \natN, \rho(n) = \sigma(n) $:
+\begin{description}
+    \item[Base case.] 
+    \begin{align*}
+        \rho(0) & = \head(\merge(\even(\sigma), \odd(\sigma))) \\
+        & = \head(\even(\sigma)) \\
+        & = \head(\sigma) \\
+        & = \sigma(0)
+    \end{align*}
+    \item[Inductive case.]
+     \begin{align*}
+        \rho(n+1) & =  \merge(\odd(\sigma), \tail(\even(\sigma)))(n) \\
+        & =  \merge(\odd(\sigma), \odd(\tail(\sigma)))(n) \\
+        & = \merge( \even(\tail(\sigma)), \odd(\tail(\sigma)) )(n) & (\text{IH}) \\
+        & = \tail(\sigma)(n) \\
+        & = \sigma(n+1)
+    \end{align*}
+\end{description}
+    
+\end{proof}
+
+\begin{proposition}
+$ \even(\merge(\sigma, \tau)) = \sigma $
+\end{proposition}
+\begin{proof}
+Let $\rho = \even(\merge(\sigma, \tau))$.
+\begin{description}
+    \item[Base case.] 
+    \begin{align*}
+        \rho(0) & = \merge(\sigma, \tau)(0) \\
+        & = \sigma(0) 
+    \end{align*}
+    \item[Inductive case.]
+     \begin{align*}
+        \rho(n+1) & =  \merge(\sigma, \tau)(2(n + 1)) \\
+        & =  \sigma(n+1) 
+    \end{align*}
+\end{description}
+\end{proof}
+
+Similarly we can show    $\odd(\merge(\sigma, \tau)) = \tau$.
+    
+\section{Bisimulation and Coinduction}
+Proof by induction is common and useful on inductive data structures. Similarly, one would expect coinductive proof on coinductive data structures. One convenient way for this is to find a bisimulation, and then apply the coinductive principle. To get the feeling of coinduction, we will focus on infinite streams $\alphA^*$ here.
+\begin{definition}\label{def:bis-stream}
+A relation $R \subseteq \alphA^* \times \alphA^*$ is a \emph{bisimulation} if $\forall (\sigma, \tau) \in R$, 
+\begin{enumerate}
+    \item $\head(\sigma) = \head(\tau)$
+    \item $(\tail(\sigma), \tail(\sigma)) \in R$
+\end{enumerate}
+\end{definition}
+
+We say that two infinite sequences $\sigma$ and $\tau$ are \emph{bisimilar}, denoted as $\sigma\bis \tau$, if there exists some bisimulation between them. Bisimulation provides a way of proving by coinduction:
+\begin{lemma}[Coinductive Principle for $\alphA^*$]
+For all $\sigma, \tau\in \alphA^*$,
+\begin{equation*}
+    \sigma\bis \tau \imply \sigma = \tau
+\end{equation*}
+\end{lemma}
+\begin{proof}
+Suppose $R\subseteq \alphA^* \times \alphA^*$ is a bisimulation such that $(\sigma, \tau) \in R$. It suffices to show that $\sigma(n) = \tau(n)$, for all $n\in \natN$. We prove by induction on $n$.
+\begin{itemize}
+    \item For $n=0$, this is exactly $(1)$ in definition \ref{def:bis-stream}.
+    \item For $n + 1$, note that by $(2)$ in definition \ref{def:bis-stream} we have $\tail(\sigma) \bis \tail(\tau)$. So we have:
+    \begin{align*}
+        \sigma(n+1) & = \tail(\sigma)(n) \\
+        & = \tail(\tau)(n) & (\text{IH}) \\
+        & = \tau(n+1)
+    \end{align*}
+\end{itemize}
+Therefore $\sigma = \tau$.
+\end{proof}
+
+In some cases, we may not have a bisimulation at first sight. It is common that we start from the conclusion we want to proof, and construct a bisimulation by adding the necessary pairs.
+\begin{example}
+Consider the equation
+    \begin{equation}\label{eq:merge-id}
+        \merge(\even(\sigma), \odd(\sigma)) = \sigma 
+    \end{equation}
+To derive \eqref{eq:merge-id} using the coinduction principle, we would like to construct some bisimulation $R$ which contains the pair consisting of the streams on both sides of \eqref{eq:merge-id}. Consider the relation 
+    \[
+    R_0 = \{ (\merge(\even(\sigma), \odd(\sigma)), \sigma) \mid \sigma\in \alphA^\omega \}
+    \]
+To ensure condition $(2)$ in definition \ref{def:bis-stream}, we need to add the following pairs to the relation:
+    \[
+    R_1 = \{ (\tail(\merge(\even(\sigma), \odd(\sigma))), \tail(\sigma)) \mid \sigma\in \alphA^\omega \}
+    \]
+Proceeding like this, we get a sequence of relations, and the union of all these relations should give a bisimulation. Fortunately we do not need to add a lot, since $R_1$ is already included in $R_0$:
+\begin{align*}
+    \tail(\merge (\even(\sigma), \odd(\sigma)) ) & = \merge( \odd(\sigma), \tail(\even(\sigma)) ) \\
+    & = \merge( \even (\tail(\sigma)), \odd(\tail(\sigma)) )
+\end{align*}
+For any $\sigma$, consider $\tau = \tail(\sigma)$, and we know that $(\merge(\even(\tau),\odd(\tau)), \tau )\in R_0$.
+\end{example}
+
+\begin{example}
+Consider the equation
+\begin{equation}
+    \even(\merge (\sigma, \tau)) = \sigma
+\end{equation}
+Following the above strategy, we construct a sequence of relations:
+\begin{align*}
+    R_0 & = \{ (\even (\merge(\sigma,\tau)), \sigma) \mid \sigma, \tau \in \alphA^\omega \} \\
+    R_1 & = \{ ( \tail(\even(\merge(\sigma,\tau))), \tail(\sigma) ) \mid \sigma, \tau \in \alphA^\omega \} \\
+    R_2 & = \{ ( \tail(\tail(\even(\merge(\sigma,\tau)))), \tail(\tail(\sigma)) ) \mid \sigma, \tau \in \alphA^\omega \} \\
+    \cdots
+\end{align*}
+Note that
+\begin{align*}
+    \tail(\even(\merge(\sigma,\tau))) & = \odd( \tail(\merge(\sigma,\tau)) ) \\
+    & = \odd( \merge(\tau, \tail(\sigma)) ) \\
+    \tail(\odd(\merge(\sigma,\tau))) & = \even( \tail(\merge(\sigma,\tau)) ) \\
+    & = \even(\merge(\tau, \tail(\sigma)))
+\end{align*}
+Then it is easy to see that $R_0 \supseteq R_2 \supseteq \cdots$ and $R_1 \supseteq R_3 \supseteq \cdots$. So the union of the whole sequence terminates as $R \coloneqq R_0\cup R_1$. $R$ is then a bisimulation containing all $(\even(\merge(\sigma, \tau)), \sigma)$.
+\end{example}
+
+\section*{Homework}
+Suppose $R, S\subseteq \alphA^\omega \times \alphA^\omega$ are bisimulations.
+\begin{enumerate}
+    \item $R; S$ is bisimulation, where $(x,z) \in R;S$ iff $\exists y$ such that $(x,y)\in R$ and $(y,z) \in S$.
+    \item $R^{o}$ is bisimulation, where $(x,y) \in R^{o}$ iff $(y,x)\in R$.
+\end{enumerate}
+\end{document}
